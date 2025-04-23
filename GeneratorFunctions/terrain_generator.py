@@ -51,6 +51,30 @@ def generate_base_heightmap(config): # Generación de mapa de alturas por sistem
 
     return heightmap
 
+def apply_radial_fade(heightmap, base_strength=1.8, random_offset=True):
+    h, w = heightmap.shape
+
+    if random_offset:
+        offset_x = int(w * random.uniform(-0.15, 0.15))
+        offset_y = int(h * random.uniform(-0.15, 0.15))
+    else:
+        offset_x = 0
+        offset_y = 0
+
+    cx, cy = w // 2 + offset_x, h // 2 + offset_y
+
+    ys, xs = np.ogrid[:h, :w]
+    dx = (xs - cx) / (w // 2)
+    dy = (ys - cy) / (h // 2)
+    distance = np.sqrt(dx**2 + dy**2)
+
+    strength = base_strength * random.uniform(0.85, 1.15)
+
+    fade = np.clip(distance, 0, 1) ** strength
+
+    # Reducción proporcional al máximo del mapa (esto es clave)
+    return heightmap - fade * np.max(heightmap) * 0.9
+
 def normalize_heightmap(heightmap, out_min=0, out_max=255): # Normalización del mapa de alturas
     h_min = np.min(heightmap)
     h_max = np.max(heightmap)
