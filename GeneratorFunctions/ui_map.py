@@ -9,6 +9,7 @@ from terrain_generator import (
     apply_radial_fade,
     classify_terrain
 )
+import time
 from map_render import render_map_surface
 
 # ---------- Clase Slider ----------
@@ -120,6 +121,9 @@ def run_ui_config():
                         numeric_seed = seed_from_string(seed_text)
                         random.seed(numeric_seed)
 
+                        start_t = time.time()
+                        print("Generando el mapa")
+
                         heightmap = generate_base_heightmap(config)
                         heightmap = apply_radial_fade(heightmap, base_strength=1)
                         norm_map = normalize_heightmap(heightmap)
@@ -130,6 +134,9 @@ def run_ui_config():
 
                         generated_surface = render_map_surface(terrain_map, mode="biomes")
                         state = "map"
+
+                        end_t = time.time()
+                        print(f"Mapa generado en {end_t - start_t:.2f} segundos")
 
                 if event.type == pygame.KEYDOWN and seed_active:
                     if event.key == pygame.K_BACKSPACE:
