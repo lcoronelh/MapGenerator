@@ -2,14 +2,31 @@ import numpy as np
 import random
 import math
 import pygame
+from noise import pnoise3
+
+
+def generate_cyclic_perlin_noise(width, height, scale=1.0, octaves=4, persistence=0.5, lacunarity=2.0): # Generación de ruido Perlin cicliclo para el mapa envolvente
+
+    result = np.zeros((height, width), dtype=np.float32)
+    for y in range(height):
+        for x in range(width):
+            # Coordenadas cíclicas
+            nx = scale * np.cos(2 * np.pi * x / width)
+            ny = scale * np.sin(2 * np.pi * x / width)
+            nz = scale * y / height
+
+            result[y, x] = pnoise3(nx, ny, nz, octaves=octaves, persistence=persistence, lacunarity=lacunarity)
+
+    return result
 
 def generate_base_heightmap(config): # Generación de mapa de alturas por sistema de fallas
+
     width = config["Ancho del mapa"]
     height = config["Alto del mapa"]
     num_faults = config["Iteraciones de fallas"]
 
     # Altura inicial: array de ceros
-    heightmap = np.zeros((height, width), dtype=np.int16)
+    heightmap = np.zeros((height, width), dtype=np.float32)
 
     # Generar fallas
     for _ in range(num_faults):
@@ -28,6 +45,9 @@ def generate_base_heightmap(config): # Generación de mapa de alturas por sistem
         # Modificamos toda la matriz de una vez
         heightmap += (side > 0) * 1
         heightmap -= (side <= 0) * 1
+    
+    perlin = generate_cyclic_perlin_noise(width, height, scale=2.5)
+    heightmap += perlin * 10
 
     return heightmap
 

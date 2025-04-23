@@ -45,7 +45,7 @@ class Slider:
 # ---------- Interfaz principal ----------
 def run_ui_config():
     pygame.init()
-    screen = pygame.display.set_mode((600, 550), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
     pygame.display.set_caption("Configuración del Mapa")
     font = pygame.font.SysFont("Arial", 20)
 

@@ -1,7 +1,7 @@
 import random
 
 default_config = {
-    "Ancho del mapa": 500,
+    "Ancho del mapa": 1000,
     "Alto del mapa": 500,
     "Porcentaje de agua": 60,
     "Porcentaje de hielo": 10,
