@@ -58,8 +58,7 @@ def run_ui_config():
         ("Ancho del mapa", 100, 1000, default_config["Ancho del mapa"]),
         ("Alto del mapa", 100, 1000, default_config["Alto del mapa"]),
         ("Porcentaje de agua", 0, 100, default_config["Porcentaje de agua"]),
-        ("Porcentaje de hielo", 0, 100, default_config["Porcentaje de hielo"]),
-        ("Iteraciones de fallas", 1, 100, default_config["Iteraciones de fallas"])
+        ("Porcentaje de hielo", 0, 100, default_config["Porcentaje de hielo"])
     ]
 
     sliders = []
@@ -116,6 +115,7 @@ def run_ui_config():
                     if button_rect.collidepoint(event.pos):
                         config = {slider.label: slider.value for slider in sliders}
                         config["Semilla"] = seed_text
+                        config["Iteraciones de fallas"] = 15000
 
                         numeric_seed = seed_from_string(seed_text)
                         random.seed(numeric_seed)

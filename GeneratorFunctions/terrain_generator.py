@@ -27,6 +27,8 @@ def generate_base_heightmap(config): # Generación de mapa de alturas por sistem
 
     # Altura inicial: array de ceros
     heightmap = np.zeros((height, width), dtype=np.float32)
+    # Crear la malla de coordenadas
+    xs, ys = np.meshgrid(np.arange(width), np.arange(height))
 
     # Generar fallas
     for _ in range(num_faults):
@@ -35,9 +37,6 @@ def generate_base_heightmap(config): # Generación de mapa de alturas por sistem
         angle = random.uniform(0, 2 * math.pi)
         dx = math.cos(angle)
         dy = math.sin(angle)
-
-        # Creamos una malla de coordenadas
-        xs, ys = np.meshgrid(np.arange(width), np.arange(height))
 
         # Evaluamos qué puntos están de qué lado de la falla
         side = (xs - x1) * dy - (ys - y1) * dx
