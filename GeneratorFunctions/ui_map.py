@@ -3,7 +3,12 @@ import sys
 import random
 from terrain_config import default_config
 from terrain_utils import seed_from_string
-from terrain_generator import generate_base_heightmap, normalize_heightmap, apply_radial_fade
+from terrain_generator import (
+    generate_base_heightmap,
+    normalize_heightmap,
+    apply_radial_fade,
+    classify_terrain
+)
 from map_render import render_map_surface
 
 # ---------- Clase Slider ----------
@@ -111,12 +116,19 @@ def run_ui_config():
                     if button_rect.collidepoint(event.pos):
                         config = {slider.label: slider.value for slider in sliders}
                         config["Semilla"] = seed_text
+
                         numeric_seed = seed_from_string(seed_text)
                         random.seed(numeric_seed)
+
                         heightmap = generate_base_heightmap(config)
                         heightmap = apply_radial_fade(heightmap, base_strength=1)
                         norm_map = normalize_heightmap(heightmap)
-                        generated_surface = render_map_surface(norm_map, mode="grayscale")
+
+                        terrain_map = classify_terrain(norm_map,
+                                config["Porcentaje de agua"],
+                                mountain_percent=15)
+
+                        generated_surface = render_map_surface(terrain_map, mode="biomes")
                         state = "map"
 
                 if event.type == pygame.KEYDOWN and seed_active:

@@ -84,3 +84,19 @@ def normalize_heightmap(heightmap, out_min=0, out_max=255): # Normalización del
 
     norm = (heightmap - h_min) / (h_max - h_min)
     return (norm * (out_max - out_min) + out_min).astype(np.uint8)
+
+def classify_terrain(heightmap, water_percent, mountain_percent):
+    """
+    Clasifica el terreno en 3 tipos:
+    0 = Agua, 1 = Llanura, 2 = Montaña
+    """
+
+    flat = heightmap.flatten()
+    water_thresh = np.percentile(flat, water_percent)
+    mountain_thresh = np.percentile(flat, 100 - mountain_percent)
+
+    terrain_map = np.zeros_like(heightmap, dtype=np.uint8)
+    terrain_map[heightmap > water_thresh] = 1        # Llanura por defecto
+    terrain_map[heightmap > mountain_thresh] = 2      # Montaña sobrescribe llanura
+
+    return terrain_map
