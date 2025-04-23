@@ -7,7 +7,8 @@ from terrain_generator import (
     generate_base_heightmap,
     normalize_heightmap,
     apply_radial_fade,
-    classify_terrain
+    classify_terrain,
+    thermal_erosion
 )
 import time
 from map_render import render_map_surface
@@ -126,11 +127,12 @@ def run_ui_config():
 
                         heightmap = generate_base_heightmap(config)
                         heightmap = apply_radial_fade(heightmap, base_strength=1)
-                        norm_map = normalize_heightmap(heightmap)
+                        erosioned_map = thermal_erosion(heightmap)
+                        norm_map = normalize_heightmap(erosioned_map)
 
                         terrain_map = classify_terrain(norm_map,
                                 config["Porcentaje de agua"],
-                                mountain_percent=15)
+                                mountain_percent=10)
 
                         generated_surface = render_map_surface(terrain_map, mode="biomes")
                         state = "map"

@@ -99,3 +99,20 @@ def classify_terrain(heightmap, water_percent, mountain_percent):
     terrain_map[heightmap > mountain_thresh] = 2      # Montaña sobrescribe llanura
 
     return terrain_map
+
+def thermal_erosion(heightmap, threshold=0.5, erosion_factor=0.05, iterations=10):
+    h, w = heightmap.shape
+    for _ in range(iterations):
+        new_map = heightmap.copy()
+        for dy, dx in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            shifted = np.roll(heightmap, shift=dy, axis=0)
+            shifted = np.roll(shifted, shift=dx, axis=1)
+            delta = heightmap - shifted
+
+            mask = delta > threshold
+            amount = delta * erosion_factor * mask
+
+            new_map -= amount
+            new_map += np.roll(np.roll(amount, -dy, axis=0), -dx, axis=1)
+        heightmap = new_map
+    return heightmap
