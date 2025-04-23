@@ -2,6 +2,15 @@ import pygame
 import sys
 import random
 from terrain_config import default_config
+from terrain_utils import seed_from_string
+from terrain_generator import (
+    generate_base_heightmap,
+    normalize_heightmap,
+    apply_radial_fade,
+    classify_terrain
+)
+import time
+from map_render import render_map_surface
 
 # ---------- Clase Slider ----------
 class Slider:
@@ -38,60 +47,56 @@ class Slider:
             self.handle_x = max(self.rect.x, min(event.pos[0], self.rect.right))
             self.value = self._pos_to_value(self.handle_x)
 
+
 # ---------- Interfaz principal ----------
 def run_ui_config():
     pygame.init()
-    screen = pygame.display.set_mode((600, 550), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
     pygame.display.set_caption("Configuración del Mapa")
     font = pygame.font.SysFont("Arial", 20)
 
-    # Definiciones lógicas
     slider_defs = [
         ("Ancho del mapa", 100, 1000, default_config["Ancho del mapa"]),
         ("Alto del mapa", 100, 1000, default_config["Alto del mapa"]),
         ("Porcentaje de agua", 0, 100, default_config["Porcentaje de agua"]),
-        ("Porcentaje de hielo", 0, 100, default_config["Porcentaje de hielo"]),
-        ("Iteraciones de fallas", 1, 100, default_config["Iteraciones de fallas"])
+        ("Porcentaje de hielo", 0, 100, default_config["Porcentaje de hielo"])
     ]
 
     sliders = []
 
-    # Semilla editable
     seed_text = default_config["Semilla"]
     seed_active = False
-    seed_rect = pygame.Rect(0, 0, 300, 32)  # Posición se ajusta dinámicamente
+    seed_rect = pygame.Rect(0, 0, 300, 32)
 
-    # Botón
     button_rect = pygame.Rect(0, 0, 200, 50)
     button_color = (100, 200, 100)
 
     clock = pygame.time.Clock()
-    running = True
+    state = "menu"
+    generated_surface = None
 
-    while running:
+    while True:
         screen.fill((30, 30, 30))
-
         center_x = screen.get_width() // 2
         slider_width = 400
         spacing_y = 60
         total_height = len(slider_defs) * spacing_y + 32 + 50 + 60
         start_y = (screen.get_height() - total_height) // 2
 
+        # Crear sliders una sola vez
+        if state == "menu" and not sliders:
+            for i, (label, min_val, max_val, default) in enumerate(slider_defs):
+                x = center_x - slider_width // 2
+                y = start_y + i * spacing_y
+                slider = Slider(x, y, slider_width, min_val, max_val, default, label)
+                sliders.append(slider)
 
-        sliders.clear()
-        for i, (label, min_val, max_val, default) in enumerate(slider_defs):
-            x = center_x - slider_width // 2
-            y = start_y + i * spacing_y
-            slider = Slider(x, y, slider_width, min_val, max_val, default, label)
-            sliders.append(slider)
-
-        # Posición semilla
+        # Actualizar posición de elementos
         seed_rect.width = 300
         seed_rect.height = 32
         seed_rect.x = center_x - seed_rect.width // 2
         seed_rect.y = start_y + len(slider_defs) * spacing_y + 10
 
-        # Posición botón
         button_rect.width = 200
         button_rect.height = 50
         button_rect.x = center_x - button_rect.width // 2
@@ -102,46 +107,63 @@ def run_ui_config():
                 pygame.quit()
                 sys.exit()
 
+            if state == "menu":
+                for slider in sliders:
+                    slider.handle_event(event)
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    seed_active = seed_rect.collidepoint(event.pos)
+                    if button_rect.collidepoint(event.pos):
+                        config = {slider.label: slider.value for slider in sliders}
+                        config["Semilla"] = seed_text
+                        config["Iteraciones de fallas"] = 15000
+
+                        numeric_seed = seed_from_string(seed_text)
+                        random.seed(numeric_seed)
+
+                        start_t = time.time()
+                        print("Generando el mapa")
+
+                        heightmap = generate_base_heightmap(config)
+                        heightmap = apply_radial_fade(heightmap, base_strength=1)
+                        norm_map = normalize_heightmap(heightmap)
+
+                        terrain_map = classify_terrain(norm_map,
+                                config["Porcentaje de agua"],
+                                mountain_percent=15)
+
+                        generated_surface = render_map_surface(terrain_map, mode="biomes")
+                        state = "map"
+
+                        end_t = time.time()
+                        print(f"Mapa generado en {end_t - start_t:.2f} segundos")
+
+                if event.type == pygame.KEYDOWN and seed_active:
+                    if event.key == pygame.K_BACKSPACE:
+                        seed_text = seed_text[:-1]
+                    elif len(seed_text) < 30:
+                        seed_text += event.unicode
+
+        if state == "menu":
             for slider in sliders:
-                slider.handle_event(event)
+                slider.draw(screen, font)
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                seed_active = seed_rect.collidepoint(event.pos)
-                if button_rect.collidepoint(event.pos):
-                    config = {slider.label: slider.value for slider in sliders}
-                    config["Semilla"] = seed_text
-                    print("Configuración seleccionada:")
-                    for k, v in config.items():
-                        print(f"  {k}: {v}")
-                    running = False
+            pygame.draw.rect(screen, (255, 255, 255), seed_rect, 2)
+            label_seed = font.render("Semilla:", True, (255, 255, 255))
+            text_surface = font.render(seed_text, True, (255, 255, 255))
+            screen.blit(label_seed, (seed_rect.x, seed_rect.y - 25))
+            screen.blit(text_surface, (seed_rect.x + 5, seed_rect.y + 5))
 
-            if event.type == pygame.KEYDOWN and seed_active:
-                if event.key == pygame.K_BACKSPACE:
-                    seed_text = seed_text[:-1]
-                elif len(seed_text) < 30:
-                    seed_text += event.unicode
+            pygame.draw.rect(screen, button_color, button_rect)
+            button_text = font.render("Generar mapa", True, (0, 0, 0))
+            screen.blit(button_text, (button_rect.x + 30, button_rect.y + 15))
 
-        for slider in sliders:
-            slider.draw(screen, font)
-
-        # Dibujar campo semilla
-        pygame.draw.rect(screen, (255, 255, 255), seed_rect, 2)
-        label_seed = font.render("Semilla:", True, (255, 255, 255))
-        text_surface = font.render(seed_text, True, (255, 255, 255))
-        screen.blit(label_seed, (seed_rect.x, seed_rect.y - 25))
-        screen.blit(text_surface, (seed_rect.x + 5, seed_rect.y + 5))
-
-        # Dibujar botón
-        pygame.draw.rect(screen, button_color, button_rect)
-        button_text = font.render("Generar mapa", True, (0, 0, 0))
-        screen.blit(button_text, (button_rect.x + 30, button_rect.y + 15))
+        elif state == "map" and generated_surface is not None:
+            screen.blit(pygame.transform.scale(generated_surface, screen.get_size()), (0, 0))
 
         pygame.display.flip()
         clock.tick(60)
 
-    pygame.quit()
-    return config
-
 # ---------- Ejecutable ----------
 if __name__ == "__main__":
-    config = run_ui_config()
+    run_ui_config()
