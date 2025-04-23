@@ -100,7 +100,7 @@ def classify_terrain(heightmap, water_percent, mountain_percent):
 
     return terrain_map
 
-def thermal_erosion(heightmap, threshold=0.5, erosion_factor=0.05, iterations=10):
+def thermal_erosion(heightmap, threshold=0.5, erosion_factor=0.05, iterations=15):
     h, w = heightmap.shape
     for _ in range(iterations):
         new_map = heightmap.copy()

@@ -11,6 +11,7 @@ from terrain_generator import (
     thermal_erosion
 )
 import time
+from terrain_rivers import generate_rivers
 from map_render import render_map_surface
 
 # ---------- Clase Slider ----------
@@ -133,8 +134,9 @@ def run_ui_config():
                         terrain_map = classify_terrain(norm_map,
                                 config["Porcentaje de agua"],
                                 mountain_percent=10)
+                        river_map = generate_rivers(heightmap, terrain_map, num_rivers=50, max_steps=500)
 
-                        generated_surface = render_map_surface(terrain_map, mode="biomes")
+                        generated_surface = render_map_surface(terrain_map, mode="biomes", river_map=river_map)
                         state = "map"
 
                         end_t = time.time()

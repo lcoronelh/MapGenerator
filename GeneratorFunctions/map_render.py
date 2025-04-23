@@ -1,13 +1,16 @@
 import pygame
 import numpy as np
 
-def render_map_surface(data_array, mode="grayscale"):
+def render_map_surface(data_array, mode="grayscale", river_map=None):
     if mode == "grayscale":
         rgb_array = np.stack([data_array]*3, axis=-1)
     elif mode == "biomes":
         rgb_array = biomes_to_rgb(data_array)
     else:
         raise ValueError(f"Modo de renderizado no soportado: {mode}")
+    if river_map is not None:
+        river_color = np.array([0, 0, 255], dtype=np.uint8)
+        rgb_array[river_map == 1] = river_color
 
     return pygame.surfarray.make_surface(rgb_array)
     
